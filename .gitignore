@@ -1,4 +1,3 @@
-
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -13,5 +12,20 @@ env/
 .vscode/
 .idea/
 .DS_Store
-Thumbs.db.agents/
+Thumbs.db
+.agents/
 bench.py
+
+# Web front-end
+node_modules/
+web/dist/
+web/.vite/
+*.local
+npm-debug.log*
+
+# Test / build artifacts
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+coverage/

@@ -1,0 +1,8 @@
+[tool.vercel]
+# Vercel پیش‌فرض entrypoint را در app.py/… می‌جوید؛ app.py ریشه استریم‌لیت است،
+# پس نقطه ورود ASGI صریح ست می‌شود.
+entrypoint = "metals_whatif.api.main:app"
+
+[tool.vercel.fastapi.static]
+# web/dist از طریق app.mount به CDN منتقل می‌شود؛ مسیرها اولویت دارند.
+cdn = true

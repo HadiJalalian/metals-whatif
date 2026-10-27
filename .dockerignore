@@ -1,0 +1,13 @@
+.git
+.venv
+venv
+__pycache__
+*.py[cod]
+.pytest_cache
+tests
+web/node_modules
+web/src
+web/index.html
+web/vite.config.ts
+web/tsconfig.json
+app.py

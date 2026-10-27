@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Metals What-if — Gold, Silver, Copper & Zinc Sensitivity</title>
+    <meta
+      name="description"
+      content="Interactive price and bubble sensitivity matrices for Iranian gold, silver, and metal deposit certificates."
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      // جهت و زبان پیش از mount ست می‌شود تا پرش RTL/فونت نبینیم.
+      try {
+        const stored = localStorage.getItem("mwi.lang");
+        const lang =
+          stored ?? (navigator.language.toLowerCase().startsWith("fa") ? "fa" : "en");
+        document.documentElement.lang = lang;
+        document.documentElement.dir = lang === "fa" ? "rtl" : "ltr";
+      } catch {
+        /* localStorage در حالت خصوصی در دسترس نیست */
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,351 @@
+import type { AssetKey, AxisName } from "../lib/api";
+
+export type Lang = "en" | "fa";
+
+const en = {
+  brand: {
+    title: "Metals What-if",
+    subtitle: "Price & bubble sensitivity for the Iranian metals market",
+    disclaimer:
+      "A computational and educational tool. Not investment advice.",
+  },
+  common: {
+    languageName: "فارسی",
+    reset: "Reset",
+    base: "Base",
+    scenarios: "scenarios",
+    cells: "cells",
+    loading: "Computing…",
+    retry: "Retry",
+    step: "Step",
+    stepsUp: "Steps up",
+    stepsDown: "Steps down",
+    premium: "Premium α (%)",
+    includeCosts: "Add VAT & fees",
+    vat: "VAT (%)",
+    fee: "Trading fee (%)",
+    optionalCosts: "Optional cost settings",
+    notSet: "not set",
+    overpriced: "Above model",
+    underpriced: "Below model",
+    balanced: "At model",
+    noBubble: "No market price",
+    toman: "Toman",
+  },
+  axes: {
+    usd: { name: "Free-market USD", unit: "Toman", short: "USD" },
+    gold: { name: "Gold ounce", unit: "USD", short: "XAU" },
+    silver: { name: "Silver ounce", unit: "USD", short: "XAG" },
+    copper: { name: "Copper LME", unit: "USD/tonne", short: "CU" },
+    zinc: { name: "Zinc LME", unit: "USD/tonne", short: "ZN" },
+  } satisfies Record<AxisName, { name: string; unit: string; short: string }>,
+  sections: {
+    scenarios: "Scenario axes",
+    scenariosHint:
+      "Each axis builds one matrix dimension. The USD axis is always the columns.",
+    assumptions: "Assumptions & costs",
+    bubble: "Gold & silver bubble",
+    bubbleHint:
+      "Shifts the modelled fair value of gold and raw silver before comparing with the market.",
+    market: "Market prices for bubble",
+    marketHint:
+      "Leave a field at zero to hide that asset's bubble matrix.",
+    certificateHint:
+      "Deposit certificates price off LME/ounce and FX; premium, VAT and fees are optional layers.",
+  },
+  inputs: {
+    bubblePct: "Bubble / commission applied to model value (%)",
+    market: {
+      gold_18k: "Gold 18k, per gram",
+      mazaneh: "Mazaneh",
+      silver_999: "Silver 999, per gram",
+      silver_cert: "Silver certificate (board)",
+      copper: "Copper certificate (board)",
+      zinc: "Zinc certificate (board)",
+    } satisfies Record<AssetKey, string>,
+    rialHelp: "The commodity-board price is in Rials — enter Toman.",
+  },
+  assets: {
+    gold_18k: {
+      tab: "Gold 18k",
+      sub: "18k gold per gram, Toman",
+      caption:
+        "Modelled price of one gram of 18k gold across USD and world gold-ounce scenarios.",
+      formula: "(ounce × USD) ÷ 31.1034 × 0.75 × (1 + bubble)",
+      unitLabel: "Price per gram of 18k gold",
+      bubbleLabel: "18k gold, per gram",
+    },
+    mazaneh: {
+      tab: "Mazaneh",
+      sub: "Gold market mazaneh, Toman",
+      caption:
+        "Modelled mazaneh across USD and world gold-ounce scenarios.",
+      formula: "18k per-gram price (no bubble) × 4.3318 × (1 + bubble)",
+      unitLabel: "Modelled mazaneh",
+      bubbleLabel: "Mazaneh",
+    },
+    silver_999: {
+      tab: "Raw silver 999",
+      sub: "Raw 999 silver, Toman per gram",
+      caption:
+        "Modelled price of one gram of raw 999 silver across USD and world silver-ounce scenarios.",
+      formula: "(ounce × USD) ÷ 31.1034 × (1 + bubble)",
+      unitLabel: "Price per gram of silver 999",
+      bubbleLabel: "silver 999, per gram",
+    },
+    silver_cert: {
+      tab: "Silver certificate",
+      sub: "Silver deposit certificate (CD1SIB0001), Toman",
+      caption:
+        "One certificate is assumed to be 1 g of 999.9 silver. The ounce axis is shared with raw silver, but this premium is independent of the raw-silver bubble.",
+      formula: "(silver ounce ÷ 31.1034) × USD × (1 + α)",
+      unitLabel: "Value per silver certificate",
+      bubbleLabel: "silver certificate",
+    },
+    copper: {
+      tab: "Copper cathode",
+      sub: "Copper cathode deposit certificate, Toman",
+      caption:
+        "One certificate is assumed to be 1 kg of copper cathode. LME is in USD/tonne and FX in Toman/USD.",
+      formula: "LME × USD × (1 + α) ÷ 1000",
+      unitLabel: "Value per copper certificate",
+      bubbleLabel: "copper certificate",
+    },
+    zinc: {
+      tab: "Zinc ingot",
+      sub: "Zinc ingot deposit certificate, Toman",
+      caption:
+        "One certificate is assumed to be 1 kg of 99.97% zinc ingot. LME is in USD/tonne and FX in Toman/USD.",
+      formula: "LME × USD × (1 + α) ÷ 1000",
+      unitLabel: "Value per zinc certificate",
+      bubbleLabel: "zinc certificate",
+    },
+  } satisfies Record<AssetKey, {
+    tab: string;
+    sub: string;
+    caption: string;
+    formula: string;
+    unitLabel: string;
+    bubbleLabel: string;
+  }>,
+  certificates: {
+    copper: {
+      title: "Copper cathode",
+      premiumHelp: "Market competition premium on the cathode certificate.",
+      caption: "",
+    },
+    zinc: {
+      title: "Zinc ingot",
+      premiumHelp:
+        "Competition and handling premium, commonly 5–10%. Use 0 for pure fair value.",
+      caption:
+        "Trading the certificate itself is VAT-exempt. The 10% VAT applies only on physical clearance from the warehouse, with a minimum delivery of 21,000 sheets (21 tonnes).",
+    },
+    silver_cert: {
+      title: "Silver certificate",
+      premiumHelp:
+        "Minting, assay and supply/demand premium, commonly 3–8%. Use 0 for pure fair value. Independent of the raw-silver bubble.",
+      caption:
+        "Certificate trading is VAT-exempt and the trading fee is 0.24%. Storage (99 Rials/g/day) and delivery-assessment costs (3.6M Rials per 1 kg ingot) are not modelled. Minimum delivery is 1,000 sheets.",
+    },
+  } satisfies Record<"copper" | "zinc" | "silver_cert", {
+    title: string;
+    premiumHelp: string;
+    caption: string;
+  }>,
+  results: {
+    priceTitle: "Fair-value matrix",
+    bubbleTitle: "Bubble matrix",
+    priceLegend: "Low → high modelled value",
+    bubbleLegend: "Underpriced ← balanced → overpriced",
+    bubbleHint:
+      "Positive (red) means the market sits above the modelled value; negative (green) means below it.",
+    marketPrice: "Entered market price",
+    fairAtBase: "Fair value at base scenario",
+    bubbleAtBase: "Bubble at base scenario",
+    range: "Range across scenarios",
+    inspector: "Hover a cell",
+    row: "Row",
+    column: "Column",
+    value: "Value",
+    showTable: "Data table",
+    hideTable: "Hide table",
+    exportCsv: "Export CSV",
+  },
+  errors: {
+    emptyAxes: (axes: string[]) =>
+      `These axes have no positive values left: ${axes.join(", ")}. Reduce the step or the down-scenarios.`,
+    validation: "The server rejected these inputs. Check the ranges.",
+    network: "Cannot reach the calculation API. Start it with uvicorn.",
+    http: "The calculation failed unexpectedly.",
+  },
+};
+
+type Messages = typeof en;
+
+const fa: Messages = {
+  brand: {
+    title: "فلزات چه‌اگر",
+    subtitle: "حساسیت قیمت و حباب بازار فلزات ایران",
+    disclaimer: "این ابزار صرفاً محاسباتی و آموزشی است و توصیه‌ی سرمایه‌گذاری نیست.",
+  },
+  common: {
+    languageName: "English",
+    reset: "بازنشانی",
+    base: "پایه",
+    scenarios: "سناریو",
+    cells: "سلول",
+    loading: "در حال محاسبه…",
+    retry: "تلاش دوباره",
+    step: "گام تغییرات",
+    stepsUp: "سناریوی بالا",
+    stepsDown: "سناریوی پایین",
+    premium: "٪ پریمیوم α",
+    includeCosts: "اعمال مالیات و کارمزد",
+    vat: "مالیات ارزش افزوده (٪)",
+    fee: "کارمزد معاملات (٪)",
+    optionalCosts: "تنظیمات اختیاری هزینه‌ها",
+    notSet: "وارد نشده",
+    overpriced: "بالاتر از مدل",
+    underpriced: "پایین‌تر از مدل",
+    balanced: "در نقطه مدل",
+    noBubble: "بدون قیمت بازار",
+    toman: "تومان",
+  },
+  axes: {
+    usd: { name: "دلار آزاد", unit: "تومان", short: "دلار" },
+    gold: { name: "انس طلا", unit: "دلار", short: "طلا" },
+    silver: { name: "انس نقره", unit: "دلار", short: "نقره" },
+    copper: { name: "مس کاتد LME", unit: "دلار/تن", short: "مس" },
+    zinc: { name: "شمش روی LME", unit: "دلار/تن", short: "روی" },
+  },
+  sections: {
+    scenarios: "محورهای سناریو",
+    scenariosHint: "هر محور یک بعد ماتریس را می‌سازد؛ محور دلار همیشه ستون‌ها است.",
+    assumptions: "فرض‌ها و هزینه‌ها",
+    bubble: "حباب طلا و نقره",
+    bubbleHint:
+      "پیش از مقایسه با بازار، ارزش محاسباتی طلا و نقره خام را جابه‌جا می‌کند.",
+    market: "قیمت‌های بازار برای حباب",
+    marketHint: "اگر فیلدی را صفر بگذارید، ماتریس حباب آن دارایی نمایش داده نمی‌شود.",
+    certificateHint:
+      "گواهی سپرده از LME/انس و نرخ ارز قیمت‌گذاری می‌شود؛ پریمیوم، مالیات و کارمزد لایه‌های اختیاری‌اند.",
+  },
+  inputs: {
+    bubblePct: "٪ حباب / کارمزد اعمال‌شده روی قیمت محاسباتی",
+    market: {
+      gold_18k: "طلای ۱۸ عیار، هر گرم",
+      mazaneh: "مظنه",
+      silver_999: "نقره ۹۹۹، هر گرم",
+      silver_cert: "گواهی نقره (تابلو)",
+      copper: "گواهی مس (تابلو)",
+      zinc: "گواهی روی (تابلو)",
+    },
+    rialHelp: "قیمت تابلوی بورس کالا به ریال است؛ تومان وارد کنید.",
+  },
+  assets: {
+    gold_18k: {
+      tab: "طلای ۱۸ عیار",
+      sub: "هر گرم طلای ۱۸ عیار، تومان",
+      caption:
+        "قیمت محاسباتی هر گرم طلای ۱۸ عیار در سناریوهای دلار و انس جهانی طلا.",
+      formula: "(انس × دلار) ÷ ۳۱٫۱۰۳۴ × ۰٫۷۵ × (۱ + حباب)",
+      unitLabel: "قیمت هر گرم طلای ۱۸ عیار",
+      bubbleLabel: "هر گرم طلای ۱۸ عیار",
+    },
+    mazaneh: {
+      tab: "مظنه بازار",
+      sub: "مظنه طلا، تومان",
+      caption: "مظنه محاسباتی بازار در سناریوهای دلار و انس جهانی طلا.",
+      formula: "قیمت هر گرم ۱۸ عیار (بدون حباب) × ۴٫۳۳۱۸ × (۱ + حباب)",
+      unitLabel: "مظنه محاسباتی",
+      bubbleLabel: "مظنه طلا",
+    },
+    silver_999: {
+      tab: "نقره خام ۹۹۹",
+      sub: "نقره خام عیار ۹۹۹، تومان در گرم",
+      caption:
+        "قیمت محاسباتی هر گرم نقره خام ۹۹۹ در سناریوهای دلار و انس جهانی نقره.",
+      formula: "(انس × دلار) ÷ ۳۱٫۱۰۳۴ × (۱ + حباب)",
+      unitLabel: "قیمت هر گرم نقره ۹۹۹",
+      bubbleLabel: "هر گرم نقره ۹۹۹",
+    },
+    silver_cert: {
+      tab: "گواهی نقره",
+      sub: "گواهی سپرده شمش نقره (CD1SIB0001)، تومان",
+      caption:
+        "فرض: هر ورقه معادل ۱ گرم شمش نقره با عیار ۹۹۹٫۹ است. محور انس با نقره خام مشترک است، اما این پریمیوم مستقل از حباب نقره خام عمل می‌کند.",
+      formula: "(انس نقره ÷ ۳۱٫۱۰۳۴) × دلار × (۱ + α)",
+      unitLabel: "ارزش هر گواهی نقره",
+      bubbleLabel: "هر گواهی شمش نقره",
+    },
+    copper: {
+      tab: "مس کاتد",
+      sub: "گواهی سپرده مس کاتد، تومان",
+      caption:
+        "فرض: هر ورقه معادل یک کیلوگرم مس کاتد است. قیمت LME بر حسب دلار/تن و نرخ ارز بر حسب تومان/دلار.",
+      formula: "LME × دلار × (۱ + α) ÷ ۱۰۰۰",
+      unitLabel: "ارزش هر گواهی مس",
+      bubbleLabel: "هر گواهی مس کاتد",
+    },
+    zinc: {
+      tab: "شمش روی",
+      sub: "گواهی سپرده شمش روی، تومان",
+      caption:
+        "فرض: هر ورقه معادل یک کیلوگرم شمش روی با عیار ۹۹٫۹۷٪ است. قیمت LME بر حسب دلار/تن و نرخ ارز بر حسب تومان/دلار.",
+      formula: "LME × دلار × (۱ + α) ÷ ۱۰۰۰",
+      unitLabel: "ارزش هر گواهی روی",
+      bubbleLabel: "هر گواهی شمش روی",
+    },
+  },
+  certificates: {
+    copper: {
+      title: "مس کاتد",
+      premiumHelp: "پریمیوم رقابت بازار روی گواهی مس کاتد.",
+      caption: "",
+    },
+    zinc: {
+      title: "شمش روی",
+      premiumHelp:
+        "پریمیوم رقابت و هزینه‌های جانبی؛ معمولاً ۵ تا ۱۰٪. برای ارزش ذاتی خالص عدد ۰ را بگذارید.",
+      caption:
+        "معامله خود گواهی سپرده از VAT معاف است. مالیات ۱۰٪ فقط در صورت ترخیص و تحویل فیزیکی از انبار اعمال می‌شود. حداقل حجم تحویل ۲۱٬۰۰۰ ورقه (۲۱ تن) است.",
+    },
+    silver_cert: {
+      title: "گواهی سپرده نقره",
+      premiumHelp:
+        "پریمیوم ضرب شمش، عیارسنجی و تعادل عرضه و تقاضا؛ معمولاً ۳ تا ۸٪. برای ارزش ذاتی خالص عدد ۰ را بگذارید. این پریمیوم مستقل از حباب نقره خام است.",
+      caption:
+        "معامله گواهی سپرده از VAT معاف است و کارمزد معامله ۰٫۲۴٪ است. هزینه انبارداری (۹۹ ریال/گرم/روز) و هزینه ارزیابی تحویل (۳٫۶ میلیون ریال به ازای هر شمش ۱ کیلوگرمی) در محاسبه لحاظ نشده‌اند. حداقل تحویل ۱٬۰۰۰ ورقه است.",
+    },
+  },
+  results: {
+    priceTitle: "ماتریس ارزش ذاتی",
+    bubbleTitle: "ماتریس حباب",
+    priceLegend: "کم ← زیاد",
+    bubbleLegend: "ارزان‌تر ← متعادل → گران‌تر",
+    bubbleHint:
+      "حباب مثبت (قرمز) یعنی قیمت بازار بالاتر از مقدار محاسباتی است؛ حباب منفی (سبز) یعنی پایین‌تر.",
+    marketPrice: "قیمت بازار واردشده",
+    fairAtBase: "ارزش ذاتی در سناریوی پایه",
+    bubbleAtBase: "حباب در سناریوی پایه",
+    range: "بازه سناریوها",
+    inspector: "روی یک خانه اشاره کنید",
+    row: "سطر",
+    column: "ستون",
+    value: "مقدار",
+    showTable: "جدول داده",
+    hideTable: "بستن جدول",
+    exportCsv: "خروجی CSV",
+  },
+  errors: {
+    emptyAxes: (axes: string[]) =>
+      `با تنظیمات فعلی، بازه‌ی این موارد خالی شده است: ${axes.join("، ")}. گام تغییرات یا سناریوهای پایین را کاهش دهید.`,
+    validation: "ورودی‌ها از دامنه مجاز خارج هستند. مقادیر را بررسی کنید.",
+    network: "ارتباط با سرویس محاسبه برقرار نشد. آن را با uvicorn بالا بیاورید.",
+    http: "محاسبه به‌طور غیرمنتظره ناموفق بود.",
+  },
+};
+
+export const messages: Record<Lang, Messages> = { en, fa };
+export type { Messages };
