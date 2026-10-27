@@ -1,12 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": null,
   "installCommand": "pip install -r requirements.txt && cd web && npm ci",
   "buildCommand": "cd web && npm run build",
   "functions": {
     "metals_whatif/api/main.py": {
       "maxDuration": 30,
-      "memory": 1024
+      "excludeFiles": "web/node_modules/**,web/src/**,tests/**,.venv/**,.git/**,**/__pycache__/**"
     }
   }
 }
