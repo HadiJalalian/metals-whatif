@@ -99,8 +99,15 @@ npx vercel build --prod                          # validates the pipeline withou
 npx vercel deploy --prod
 ```
 
-Do not set `"framework": null` in `vercel.json` — it overrides the preset and makes the
-generic builder reject the entrypoint.
+Two ways this pipeline fails, both from the preset being lost:
+
+- `"framework": null` in `vercel.json` overrides the preset, and the generic builder then
+  rejects the entrypoint with *"doesn't match any Serverless Functions inside the `api`
+  directory"*.
+- Importing the repo as a **Vite** project (the dashboard offers it, because of `web/`)
+  leaves `pip install` against the image's uv-managed Python → PEP 668
+  `externally-managed-environment`. The project must use the **FastAPI** preset, with
+  `web/` as a subdirectory of the same project rather than a project of its own.
 
 **Any container host** — `docker build -t metals-whatif .` then expose port `8000`.
 
