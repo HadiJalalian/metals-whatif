@@ -29,3 +29,5 @@ npm-debug.log*
 .ruff_cache/
 htmlcov/
 coverage/
+.vercel
+.env*
