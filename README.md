@@ -9,6 +9,8 @@ and how far is the board from that number?*
 **فارسی** — مِتال‌کست ارزش ذاتی هر گرم طلای ۱۸ عیار، مظنه، نقره ۹۹۹ و گواهی سپرده مس و روی را
 در تمام ترکیب‌های دلار آزاد و قیمت جهانی می‌سازد و فاصله تابلوی بازار از آن ارزش را نشان می‌دهد.
 
+**Live / آنلاین** — <https://metalcast-nu.vercel.app>
+
 ## The interface
 
 | | |
@@ -86,14 +88,19 @@ streamlit run app.py
 
 ## Deploy
 
-**Vercel** — `vercel.json` + `pyproject.toml` are configured so one project serves the
-built front-end from the CDN and `/api/*` from a Python function (same origin, no CORS).
-Validate the pipeline before the first production deploy:
+**Vercel** — one project, one origin: the FastAPI preset loads `metals_whatif.api.main:app`
+(from `[tool.vercel.entrypoint]`) as a single function, and the `web/dist` mount is promoted
+to the CDN at build time, so the front-end never passes through Python. `excludeFiles` keeps
+`node_modules` and the test suite out of the bundle. Pushes to `main` deploy automatically.
 
 ```bash
-npx vercel build     # runs install + build locally, without deploying
-npx vercel deploy --prebuilt
+npx vercel pull --yes --environment=production   # required before a local build
+npx vercel build --prod                          # validates the pipeline without deploying
+npx vercel deploy --prod
 ```
+
+Do not set `"framework": null` in `vercel.json` — it overrides the preset and makes the
+generic builder reject the entrypoint.
 
 **Any container host** — `docker build -t metals-whatif .` then expose port `8000`.
 
