@@ -1,8 +1,26 @@
-# Metals What-if · فلزات چه‌اگر
+# MetalCast · مِتال‌کست
 
-**EN** — An interactive dashboard that builds two-dimensional sensitivity matrices (fair value and price bubble) for the Iranian metals market: 18k gold, mazaneh, raw silver 999, and deposit certificates for silver, copper cathode and zinc ingot. Every cell answers a *what-if*: what happens to fair value if the free-market dollar and the world ounce move together?
+**EN** — MetalCast computes the fair value of the Iranian metals market — 18k gold, mazaneh,
+raw silver 999 and commodity-exchange deposit certificates for silver, copper cathode and zinc
+ingot — across every combination of free-market dollar and world price you choose. Each cell
+answers one question: *if the dollar and the ounce move like this, what should this metal cost,
+and how far is the board from that number?*
 
-**فارسی** — داشبورد تعاملی ماتریس حساسیت قیمت (دلار آزاد × قیمت جهانی) و ماتریس حباب برای طلای ۱۸ عیار، مظنه، نقره ۹۹۹، گواهی سپرده شمش نقره، گواهی سپرده مس کاتد و گواهی سپرده شمش روی.
+**فارسی** — مِتال‌کست ارزش ذاتی هر گرم طلای ۱۸ عیار، مظنه، نقره ۹۹۹ و گواهی سپرده مس و روی را
+در تمام ترکیب‌های دلار آزاد و قیمت جهانی می‌سازد و فاصله تابلوی بازار از آن ارزش را نشان می‌دهد.
+
+## The interface
+
+| | |
+| --- | --- |
+| **Bilingual, natively** | English and Persian (RTL) share one code path; the API ships raw numbers, so `Intl` owns digits, separators and direction. |
+| **Two matrices per asset** | Fair-value grid plus a symmetric bubble grid (green = board below model, red = above). |
+| **Pin any cell** | Hover or click a cell and the grid spells the scenario out in one sentence — dollar, ounce, modelled price, and the gap to the board. |
+| **Impact profile** | A one-glance bar chart of the USD axis at the base row, on the same colour scale as the grid. |
+| **Density presets** | Quick 5×5, standard 9×9 or fine 17×17 sweeps without touching five inputs. |
+| **Shareable scenarios** | "Copy scenario link" puts the whole input set in the URL — no accounts, no database. |
+| **Keyboard and screen reader** | Arrow-key grid cursor, Enter to pin, Esc to release, live read-out region, `prefers-reduced-motion` respected. |
+
 
 ---
 

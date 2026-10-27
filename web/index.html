@@ -3,16 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Metals What-if — Gold, Silver, Copper & Zinc Sensitivity</title>
+    <title>MetalCast — Gold, Silver &amp; Metals Price Foresight</title>
     <meta
       name="description"
-      content="Interactive price and bubble sensitivity matrices for Iranian gold, silver, and metal deposit certificates."
+      content="MetalCast models 18k gold, mazaneh, silver and copper/zinc deposit certificates across any USD and world-price scenario, and shows how far the Iranian board sits from fair value."
     />
+    <meta name="theme-color" content="#10304f" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="MetalCast — Metals price foresight" />
+    <meta
+      property="og:description"
+      content="Fair-value and bubble sensitivity matrices for the Iranian metals market, in English and Persian."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Vazirmatn:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <script>
@@ -24,9 +32,14 @@
         document.documentElement.lang = lang;
         document.documentElement.dir = lang === "fa" ? "rtl" : "ltr";
       } catch {
-        /* localStorage در حالت خصوصی در دسترس نیست */
+        /* localStorage در حالت خصوصی مرورگر در دسترس نیست */
       }
     </script>
+    <style>
+      html {
+        background: #f2f5f8;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

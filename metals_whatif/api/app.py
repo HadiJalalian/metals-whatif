@@ -43,8 +43,8 @@ def _cors_origins() -> List[str]:
 
 def create_app() -> FastAPI:
     app = FastAPI(
-        title="Metals What-if API",
-        description="ماتریس حساسیت و حباب طلا، نقره، مس و روی",
+        title="MetalCast API",
+        description="MetalCast — fair-value and bubble sensitivity matrices for gold, silver, copper and zinc (ماتریس ارزش ذاتی و حباب)",
         version=__version__,
     )
 

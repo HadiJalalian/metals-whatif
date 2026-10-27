@@ -25,6 +25,21 @@ function display(value: number, decimals: number): string {
   return decimals > 0 ? value.toFixed(decimals).replace(/\.0+$/, "") : String(value);
 }
 
+function Chevron({ up }: { up: boolean }) {
+  return (
+    <svg viewBox="0 0 12 12" className="size-3" aria-hidden>
+      <path
+        d={up ? "M3 7.5 6 4.5 9 7.5" : "M3 4.5 6 7.5 9 4.5"}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 /** ورودی عددی با استپر؛ متن محلی اجازه می‌دهد کاربر حین تایپ مقدار خالی ببیند. */
 export function NumberField({
   label,
@@ -60,12 +75,21 @@ export function NumberField({
 
   return (
     <div className={compact ? "space-y-1" : "space-y-1.5"}>
-      <label htmlFor={id} className="label block truncate" title={help}>
-        {label}
+      <label htmlFor={id} className="label flex items-center gap-1 truncate">
+        <span className="truncate" title={help}>
+          {label}
+        </span>
+        {help ? (
+          <span
+            className="grid size-3.5 shrink-0 cursor-help place-items-center rounded-full border border-line text-[8px] font-bold text-ink-muted transition-colors hover:border-accent hover:text-accent"
+            title={help}
+          >
+            ?
+          </span>
+        ) : null}
       </label>
-      <div
-        className="flex items-stretch overflow-hidden rounded-[9px] border border-line bg-surface transition-colors focus-within:border-accent focus-within:ring-[3px] focus-within:ring-accent-soft hover:border-line-strong"
-      >
+
+      <div className="group flex items-stretch overflow-hidden rounded-[11px] border border-line bg-surface transition-all duration-150 focus-within:border-accent focus-within:shadow-[0_0_0_3px_var(--color-accent-soft)] hover:border-line-strong">
         <input
           id={id}
           type="text"
@@ -88,23 +112,23 @@ export function NumberField({
               nudge(-1);
             }
           }}
-          className="num min-w-0 flex-1 bg-transparent px-2.5 py-1.5 text-[13px] text-ink outline-none"
+          className="num min-w-0 flex-1 bg-transparent px-2.5 py-1.5 text-[13px] font-medium text-ink outline-none"
           aria-describedby={help ? `${id}-help` : undefined}
         />
         {suffix ? (
-          <span className="grid place-items-center pe-2 text-[11px] text-ink-muted">
+          <span className="grid place-items-center pe-2 text-[10.5px] whitespace-nowrap text-ink-muted">
             {suffix}
           </span>
         ) : null}
-        <div className="flex flex-col border-s border-line">
+        <div className="flex flex-col border-s border-line bg-surface-subtle">
           <button
             type="button"
             tabIndex={-1}
             onClick={() => nudge(1)}
             aria-label={`${label} +`}
-            className="flex-1 cursor-pointer bg-surface-subtle px-2 text-[10px] leading-none text-ink-secondary transition-colors hover:bg-accent-soft hover:text-accent active:bg-accent active:text-white"
+            className="flex flex-1 cursor-pointer items-center justify-center text-ink-muted transition-colors hover:bg-accent hover:text-white active:bg-brand"
           >
-            ▲
+            <Chevron up />
           </button>
           <span className="h-px bg-line" />
           <button
@@ -112,14 +136,18 @@ export function NumberField({
             tabIndex={-1}
             onClick={() => nudge(-1)}
             aria-label={`${label} −`}
-            className="flex-1 cursor-pointer bg-surface-subtle px-2 text-[10px] leading-none text-ink-secondary transition-colors hover:bg-accent-soft hover:text-accent active:bg-accent active:text-white"
+            className="flex flex-1 cursor-pointer items-center justify-center text-ink-muted transition-colors hover:bg-accent hover:text-white active:bg-brand"
           >
-            ▼
+            <Chevron up={false} />
           </button>
         </div>
       </div>
+
       {help ? (
-        <p id={`${id}-help`} className="text-[11px] leading-snug text-ink-muted">
+        <p
+          id={`${id}-help`}
+          className="animate-fade-in text-[11px] leading-snug text-ink-muted"
+        >
           {help}
         </p>
       ) : null}

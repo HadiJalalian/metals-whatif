@@ -6,6 +6,7 @@ interface SectionCardProps {
   hint?: string;
   defaultOpen?: boolean;
   badge?: ReactNode;
+  icon?: ReactNode;
   children: ReactNode;
 }
 
@@ -15,21 +16,32 @@ export function SectionCard({
   hint,
   defaultOpen = true,
   badge,
+  icon,
   children,
 }: SectionCardProps) {
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <section className="card overflow-hidden">
+    <section className="card card-lift overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
-        className="flex w-full cursor-pointer items-center gap-2 px-4 py-3 text-start transition-colors hover:bg-surface-subtle"
+        className="flex w-full cursor-pointer items-center gap-2.5 px-4 py-3 text-start transition-colors hover:bg-surface-subtle"
       >
+        <span
+          className={`grid size-7 shrink-0 place-items-center rounded-[9px] transition-colors duration-200 ${
+            open ? "bg-brand-soft text-brand" : "bg-surface-subtle text-ink-muted"
+          }`}
+          aria-hidden
+        >
+          {icon}
+        </span>
+        <span className="card-title flex-1 truncate">{title}</span>
+        {badge}
         <svg
           viewBox="0 0 16 16"
-          className={`size-3.5 shrink-0 text-ink-muted transition-transform duration-200 ${
+          className={`size-3.5 shrink-0 text-ink-muted transition-transform duration-300 ease-spring ${
             open ? "rotate-90 rtl:-rotate-90" : ""
           }`}
           aria-hidden
@@ -43,17 +55,22 @@ export function SectionCard({
             strokeLinejoin="round"
           />
         </svg>
-        <span className="card-title flex-1">{title}</span>
-        {badge}
       </button>
-      {open ? (
-        <div className="border-t border-line px-4 py-3.5">
-          {hint ? (
-            <p className="mb-3 text-[11.5px] leading-relaxed text-ink-muted">{hint}</p>
-          ) : null}
-          {children}
+
+      <div
+        className={`grid transition-[grid-template-rows,opacity] duration-300 ease-soft ${
+          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="border-t border-line px-4 py-3.5">
+            {hint ? (
+              <p className="mb-3 text-[11.5px] leading-relaxed text-ink-muted">{hint}</p>
+            ) : null}
+            {children}
+          </div>
         </div>
-      ) : null}
+      </div>
     </section>
   );
 }

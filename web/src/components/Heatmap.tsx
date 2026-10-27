@@ -3,18 +3,26 @@ import type { MatrixPayload } from "../lib/api";
 import { AXIS_DECIMALS, formatCell, formatNumber } from "../lib/format";
 import { bubbleColor, priceColor, textOn } from "../lib/colors";
 import { useLocale } from "../i18n/LocaleContext";
+import type { LocaleTag } from "../i18n/LocaleContext";
 
 export interface HeatmapProps {
   matrix: MatrixPayload;
   mode: "price" | "bubble";
-  /** واحد سمت راست inspector: تومان یا ٪ */
+  /** واحد خانه فعال: تومان یا ٪ */
   unit: string;
+  /** جمله‌ی خواندن سناریو، از کارت مادر ساخته می‌شود. */
+  readout: (row: number, col: number) => string;
 }
 
 interface Geometry {
   bgs: string[];
   fgs: string[];
   texts: string[];
+}
+
+interface Position {
+  row: number;
+  col: number;
 }
 
 const GAP = "2px";
@@ -32,7 +40,7 @@ function isBase(value: number, base: number): boolean {
 }
 
 /**
- * گرید خانه‌ها memo است: state مکان‌نما فقط header و inspector را عوض می‌کند،
+ * گرید خانه‌ها memo است: state مکان‌نما فقط overlay و inspector را عوض می‌کند،
  * وگرنه یک ماتریس ۴۱×۴۱ با هر حرکت ماوس دوباره رندر می‌شد.
  */
 const CellGrid = memo(function CellGrid({
@@ -40,11 +48,13 @@ const CellGrid = memo(function CellGrid({
   rowValues,
   colValues,
   onEnter,
+  onPin,
 }: {
   geometry: Geometry;
   rowValues: number[];
   colValues: number[];
   onEnter: (row: number, col: number) => void;
+  onPin: (row: number, col: number) => void;
 }) {
   const cols = colValues.length;
   return (
@@ -57,7 +67,8 @@ const CellGrid = memo(function CellGrid({
               key={`${rowValue}x${colValue}`}
               role="gridcell"
               onMouseEnter={() => onEnter(rowIndex, colIndex)}
-              className="num grid cursor-crosshair place-items-center rounded-[5px] py-1.5 transition-[box-shadow,transform] duration-75 hover:z-10 hover:scale-[1.06] hover:shadow-[0_0_0_2px_var(--color-ink)]"
+              onClick={() => onPin(rowIndex, colIndex)}
+              className="num grid cursor-pointer select-none place-items-center rounded-[6px] py-1.5 transition-[box-shadow,transform,filter] duration-100 hover:z-10 hover:scale-[1.08] hover:brightness-110 hover:shadow-[0_0_0_2px_var(--color-ink),0_10px_22px_-12px_rgb(10_18_32_/_0.6)]"
               style={{
                 gridColumn: colIndex + 2,
                 gridRow: rowIndex + 2,
@@ -74,13 +85,15 @@ const CellGrid = memo(function CellGrid({
   );
 });
 
-export function Heatmap({ matrix, mode, unit }: HeatmapProps) {
+export function Heatmap({ matrix, mode, unit, readout }: HeatmapProps) {
   const { t, intl } = useLocale();
-  const [cursor, setCursor] = useState<{ row: number; col: number } | null>(null);
+  const [hover, setHover] = useState<Position | null>(null);
+  const [pinned, setPinned] = useState<Position | null>(null);
 
   const rowValues = matrix.row.values;
   const colValues = matrix.col.values;
   const rowDecimals = AXIS_DECIMALS[matrix.row_axis];
+  const active = hover ?? pinned;
 
   const geometry = useMemo<Geometry>(() => {
     const flat = matrix.values.flat();
@@ -105,7 +118,7 @@ export function Heatmap({ matrix, mode, unit }: HeatmapProps) {
     const texts: string[] = [];
     for (const value of flat) {
       if (value === null || !Number.isFinite(value)) {
-        bgs.push("#f2f4f7");
+        bgs.push("#f1f4f8");
         fgs.push("#98a2b3");
         texts.push("—");
         continue;
@@ -121,38 +134,56 @@ export function Heatmap({ matrix, mode, unit }: HeatmapProps) {
     return { bgs, fgs, texts };
   }, [matrix.values, mode, intl]);
 
+  const basePosition = useMemo<Position | null>(() => {
+    const row = rowValues.findIndex((value) => isBase(value, matrix.row.base));
+    const col = colValues.findIndex((value) => isBase(value, matrix.col.base));
+    return row >= 0 && col >= 0 ? { row, col } : null;
+  }, [rowValues, colValues, matrix.row.base, matrix.col.base]);
+
   const onEnter = useCallback((row: number, col: number) => {
-    setCursor((current) =>
+    setHover((current) =>
       current?.row === row && current?.col === col ? current : { row, col }
+    );
+  }, []);
+
+  const onPin = useCallback((row: number, col: number) => {
+    setPinned((current) =>
+      current?.row === row && current?.col === col ? null : { row, col }
     );
   }, []);
 
   const moveCursor = useCallback(
     (deltaRow: number, deltaCol: number) => {
-      setCursor((current) => ({
-        row: Math.max(
-          0,
-          Math.min(rowValues.length - 1, (current?.row ?? -1) + deltaRow)
-        ),
-        col: Math.max(
-          0,
-          Math.min(colValues.length - 1, (current?.col ?? -1) + deltaCol)
-        ),
-      }));
+      setHover((current) => {
+        const start = current ?? { row: deltaRow < 0 ? rowValues.length - 1 : 0, col: 0 };
+        return {
+          row: Math.max(
+            0,
+            Math.min(rowValues.length - 1, start.row + deltaRow)
+          ),
+          col: Math.max(
+            0,
+            Math.min(colValues.length - 1, start.col + deltaCol)
+          ),
+        };
+      });
     },
     [rowValues.length, colValues.length]
   );
 
-  const cellMinWidth = mode === "bubble" ? 58 : 78;
+  const cellMinWidth = mode === "bubble" ? 60 : 80;
+  const activeValue = active
+    ? matrix.values[active.row]?.[active.col]
+    : undefined;
 
   return (
     <div className="space-y-2">
-      <div className="overflow-x-auto rounded-lg border border-line bg-surface-subtle p-1">
+      <div className="overflow-x-auto rounded-xl border border-line bg-surface-subtle p-1.5">
         <div
           role="grid"
           aria-label={mode === "price" ? t.results.priceTitle : t.results.bubbleTitle}
           tabIndex={0}
-          onMouseLeave={() => setCursor(null)}
+          onMouseLeave={() => setHover(null)}
           onKeyDown={(event) => {
             const steps: Record<string, [number, number]> = {
               ArrowUp: [-1, 0],
@@ -164,7 +195,13 @@ export function Heatmap({ matrix, mode, unit }: HeatmapProps) {
             if (step) {
               event.preventDefault();
               moveCursor(step[0], step[1]);
+              return;
             }
+            if (event.key === "Enter" && hover) {
+              event.preventDefault();
+              onPin(hover.row, hover.col);
+            }
+            if (event.key === "Escape") setPinned(null);
           }}
           className="grid min-w-max outline-none focus-visible:ring-2 focus-visible:ring-accent"
           style={{
@@ -184,8 +221,8 @@ export function Heatmap({ matrix, mode, unit }: HeatmapProps) {
           {colValues.map((value, index) => (
             <div
               key={`col-${value}`}
-              className={`sticky top-0 z-20 grid place-items-center rounded-[5px] px-1.5 py-1.5 text-[10.5px] font-medium whitespace-nowrap transition-colors ${
-                cursor?.col === index
+              className={`sticky top-0 z-20 grid place-items-center rounded-[6px] px-1.5 py-1.5 text-[10.5px] font-semibold whitespace-nowrap transition-colors duration-150 ${
+                active?.col === index
                   ? "bg-brand text-white"
                   : isBase(value, matrix.col.base)
                     ? "text-brand"
@@ -200,8 +237,8 @@ export function Heatmap({ matrix, mode, unit }: HeatmapProps) {
           {rowValues.map((value, index) => (
             <div
               key={`row-${value}`}
-              className={`sticky start-0 z-30 grid place-items-end rounded-[5px] px-2 py-1 text-[10.5px] font-medium whitespace-nowrap transition-colors ${
-                cursor?.row === index
+              className={`sticky start-0 z-30 grid place-items-end rounded-[6px] px-2 py-1 text-[10.5px] font-semibold whitespace-nowrap transition-colors duration-150 ${
+                active?.row === index
                   ? "bg-brand text-white"
                   : isBase(value, matrix.row.base)
                     ? "text-brand"
@@ -213,51 +250,133 @@ export function Heatmap({ matrix, mode, unit }: HeatmapProps) {
             </div>
           ))}
 
+          {pinned ? (
+            <>
+              <div
+                className="pointer-events-none z-[4] bg-brand/10"
+                style={{ gridColumn: "2 / -1", gridRow: pinned.row + 2 }}
+                aria-hidden
+              />
+              <div
+                className="pointer-events-none z-[4] bg-brand/10"
+                style={{ gridColumn: pinned.col + 2, gridRow: "2 / -1" }}
+                aria-hidden
+              />
+            </>
+          ) : null}
+
+          {hover ? (
+            <>
+              <div
+                className="pointer-events-none z-[5]"
+                style={{
+                  gridColumn: "2 / -1",
+                  gridRow: hover.row + 2,
+                  background: "rgb(47 111 237 / .10)",
+                }}
+                aria-hidden
+              />
+              <div
+                className="pointer-events-none z-[5]"
+                style={{
+                  gridColumn: hover.col + 2,
+                  gridRow: "2 / -1",
+                  background: "rgb(47 111 237 / .10)",
+                }}
+                aria-hidden
+              />
+            </>
+          ) : null}
+
+          {basePosition ? (
+            <div
+              className="pointer-events-none z-[6] rounded-[7px] ring-2 ring-brand/45 ring-offset-1 ring-offset-surface-subtle"
+              style={{
+                gridColumn: basePosition.col + 2,
+                gridRow: basePosition.row + 2,
+              }}
+              title={t.common.base}
+              aria-hidden
+            />
+          ) : null}
+
+          {pinned ? (
+            <div
+              className="pointer-events-none z-[7] grid place-items-start rounded-[7px] ring-2 ring-accent"
+              style={{
+                gridColumn: pinned.col + 2,
+                gridRow: pinned.row + 2,
+              }}
+              aria-hidden
+            >
+              <span className="ms-1 mt-1 size-1.5 rounded-full bg-accent" />
+            </div>
+          ) : null}
+
           <CellGrid
             geometry={geometry}
             rowValues={rowValues}
             colValues={colValues}
             onEnter={onEnter}
+            onPin={onPin}
           />
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-lg border border-line bg-surface px-3 py-2 text-[11.5px]">
-        {cursor ? (
-          <>
-            <span className="text-ink-secondary">
-              {t.axes[matrix.row_axis].name}:{" "}
-              <span className="num font-semibold text-ink">
-                {formatNumber(rowValues[cursor.row], intl, rowDecimals)}
-              </span>{" "}
-              {t.axes[matrix.row_axis].unit}
-            </span>
-            <span className="text-ink-muted">×</span>
-            <span className="text-ink-secondary">
-              {t.axes.usd.name}:{" "}
-              <span className="num font-semibold text-ink">
-                {formatNumber(colValues[cursor.col], intl, 0)}
-              </span>{" "}
-              {t.axes.usd.unit}
-            </span>
-            <span className="ms-auto">
-              <span
-                className={`num text-[13px] font-bold ${toneFor(
-                  mode,
-                  matrix.values[cursor.row]?.[cursor.col]
-                )}`}
-              >
-                {formatActive(
-                  matrix.values[cursor.row]?.[cursor.col],
-                  mode,
-                  intl
-                )}
-              </span>{" "}
-              <span className="text-ink-muted">{unit}</span>
-            </span>
-          </>
+      <div className="card space-y-1.5 px-3 py-2.5">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11.5px]">
+          {active ? (
+            <>
+              <span className="text-ink-secondary">
+                {t.axes[matrix.row_axis].name}:{" "}
+                <span className="num font-bold text-ink">
+                  {formatNumber(rowValues[active.row], intl, rowDecimals)}
+                </span>{" "}
+                <span className="text-ink-muted">{t.axes[matrix.row_axis].unit}</span>
+              </span>
+              <span className="text-ink-muted">×</span>
+              <span className="text-ink-secondary">
+                {t.axes.usd.name}:{" "}
+                <span className="num font-bold text-ink">
+                  {formatNumber(colValues[active.col], intl, 0)}
+                </span>{" "}
+                <span className="text-ink-muted">{t.axes.usd.unit}</span>
+              </span>
+              <span className="ms-auto flex items-center gap-2">
+                {pinned ? (
+                  <button
+                    type="button"
+                    className="chip py-0.5! text-[10.5px]"
+                    onClick={() => setPinned(null)}
+                  >
+                    {t.common.unpin}
+                  </button>
+                ) : null}
+                <span
+                  className={`num text-[14px] font-extrabold ${toneFor(
+                    mode,
+                    activeValue
+                  )}`}
+                >
+                  {formatActive(activeValue, mode, intl)}
+                </span>{" "}
+                <span className="text-ink-muted">{unit}</span>
+              </span>
+            </>
+          ) : (
+            <span className="text-ink-muted">{t.results.inspector}</span>
+          )}
+        </div>
+
+        {active ? (
+          <p
+            aria-live="polite"
+            className="text-[12px] leading-relaxed text-ink-secondary"
+          >
+            {readout(active.row, active.col)}
+          </p>
         ) : (
-          <span className="text-ink-muted">{t.results.inspector}</span>
+          <p className="text-[11.5px] text-ink-muted">{t.common.pin}</p>
         )}
       </div>
     </div>
@@ -267,7 +386,7 @@ export function Heatmap({ matrix, mode, unit }: HeatmapProps) {
 function formatActive(
   value: number | null | undefined,
   mode: "price" | "bubble",
-  intl: "en-US" | "fa-IR"
+  intl: LocaleTag
 ): string {
   if (value === null || value === undefined || !Number.isFinite(value)) return "—";
   return formatNumber(value, intl, mode === "bubble" ? 2 : 0);
