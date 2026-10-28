@@ -1,7 +1,7 @@
 import { memo, useCallback, useMemo, useState } from "react";
 import type { MatrixPayload } from "../lib/api";
 import { AXIS_DECIMALS, formatCell, formatNumber } from "../lib/format";
-import { bubbleColor, priceColor, textOn } from "../lib/colors";
+import { cellColors, colorDomain } from "../lib/matrixStats";
 import { useLocale } from "../i18n/LocaleContext";
 import type { LocaleTag } from "../i18n/LocaleContext";
 
@@ -96,43 +96,22 @@ export function Heatmap({ matrix, mode, unit, readout }: HeatmapProps) {
   const active = hover ?? pinned;
 
   const geometry = useMemo<Geometry>(() => {
+    const domain = colorDomain(matrix, mode);
     const flat = matrix.values.flat();
-    const finite = flat.filter(
-      (value): value is number => value !== null && Number.isFinite(value)
-    );
-
-    let min = 0;
-    let span = 1;
-    let maxAbs = 1;
-    if (finite.length > 0) {
-      if (mode === "bubble") {
-        maxAbs = Math.max(...finite.map((value) => Math.abs(value)), 1e-9);
-      } else {
-        min = Math.min(...finite);
-        span = Math.max(...finite) - min || 1;
-      }
-    }
 
     const bgs: string[] = [];
     const fgs: string[] = [];
     const texts: string[] = [];
     for (const value of flat) {
-      if (value === null || !Number.isFinite(value)) {
-        bgs.push("#f1f4f8");
-        fgs.push("#98a2b3");
-        texts.push("—");
-        continue;
-      }
-      const bg =
-        mode === "bubble"
-          ? bubbleColor(value, maxAbs)
-          : priceColor((value - min) / span);
+      const { bg, fg } = cellColors(value, mode, domain);
       bgs.push(bg);
-      fgs.push(textOn(bg));
-      texts.push(formatCell(value, mode, intl));
+      fgs.push(fg);
+      texts.push(
+        value === null || !Number.isFinite(value) ? "—" : formatCell(value, mode, intl)
+      );
     }
     return { bgs, fgs, texts };
-  }, [matrix.values, mode, intl]);
+  }, [matrix, mode, intl]);
 
   const basePosition = useMemo<Position | null>(() => {
     const row = rowValues.findIndex((value) => isBase(value, matrix.row.base));

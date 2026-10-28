@@ -1,15 +1,15 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { MatrixPayload } from "../lib/api";
 import {
   AXIS_DECIMALS,
   formatCell,
-  formatCompact,
   formatNumber,
   formatPercent,
   matrixToCsv,
 } from "../lib/format";
 import { scaleStops } from "../lib/colors";
-import { finiteValues } from "../lib/matrixStats";
+import { downloadBlob, renderMatrixPng } from "../lib/exportPng";
+import { legendEdges } from "../lib/matrixStats";
 import { useLocale } from "../i18n/LocaleContext";
 import { Heatmap } from "./Heatmap";
 import { ProfileChart } from "./ProfileChart";
@@ -38,24 +38,7 @@ function Legend({
 }) {
   const { t, intl } = useLocale();
   const stops = scaleStops(mode).join(", ");
-  const finite = finiteValues(matrix);
-
-  let low = "—";
-  let high = "—";
-  if (finite.length > 0) {
-    if (mode === "bubble") {
-      const magnitude = formatPercent(
-        Math.max(...finite.map((value) => Math.abs(value))),
-        intl,
-        1
-      );
-      low = `−${magnitude} ٪`;
-      high = `+${magnitude} ٪`;
-    } else {
-      low = formatCompact(Math.min(...finite), intl);
-      high = formatCompact(Math.max(...finite), intl);
-    }
-  }
+  const { low, high } = legendEdges(matrix, mode, intl);
 
   return (
     <div className="flex items-center gap-2">
@@ -84,8 +67,10 @@ export function MatrixCard({
   mode,
   unit,
 }: MatrixCardProps) {
-  const { t, intl } = useLocale();
+  const { t, intl, dir } = useLocale();
   const [showTable, setShowTable] = useState(false);
+  const [pngBusy, setPngBusy] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const decimals = AXIS_DECIMALS[matrix.row_axis];
 
@@ -152,14 +137,36 @@ export function MatrixCard({
       matrix.col.values.map((value) => formatNumber(value, "en-US", 0)),
       matrix.values
     );
-    const url = URL.createObjectURL(
-      new Blob([csv], { type: "text/csv;charset=utf-8" })
+    downloadBlob(
+      new Blob([csv], { type: "text/csv;charset=utf-8" }),
+      `${mode}-matrix.csv`
     );
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `${mode}-matrix.csv`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+  };
+
+  const downloadPng = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas || pngBusy) return;
+    setPngBusy(true);
+    try {
+      const stamp = new Intl.DateTimeFormat(intl, {
+        dateStyle: "short",
+        timeStyle: "short",
+      }).format(new Date());
+      const blob = await renderMatrixPng(canvas, {
+        matrix,
+        mode,
+        title,
+        subtitle,
+        eyebrow: `${t.axes[matrix.row_axis].short} × ${t.axes.usd.short}`,
+        footer: `${t.brand.title} · ${assetLabel} · ${unit} · ${stamp}`,
+        intl,
+        rtl: dir === "rtl",
+        rowDecimals: decimals,
+      });
+      if (blob) downloadBlob(blob, `${mode}-matrix-${matrix.row_axis}.png`);
+    } finally {
+      setPngBusy(false);
+    }
   };
 
   return (
@@ -196,6 +203,34 @@ export function MatrixCard({
               />
             </svg>
             {t.results.exportCsv}
+          </button>
+          <button
+            type="button"
+            className="chip"
+            onClick={downloadPng}
+            disabled={pngBusy}
+          >
+            <svg viewBox="0 0 16 16" className="size-3" aria-hidden>
+              <rect
+                x="2"
+                y="3"
+                width="12"
+                height="10"
+                rx="2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.4"
+              />
+              <path
+                d="m4 11 3-3.5 2 2 2-2.5 1 4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            {t.results.exportPng}
           </button>
           <button
             type="button"
@@ -262,6 +297,9 @@ export function MatrixCard({
           </table>
         </div>
       ) : null}
+
+      {/* بوم رندر PNG؛ بی‌نمایش است اما برای آزمون و دوباره‌استفاده در DOM می‌ماند. */}
+      <canvas ref={canvasRef} className="hidden" aria-hidden />
     </section>
   );
 }
